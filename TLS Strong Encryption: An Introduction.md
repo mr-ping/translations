@@ -1,54 +1,53 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
-
-- [SSL/TLS Strong Encryption: An Introduction](#ssltls-strong-encryption-an-introduction)
-- [健壮的SSL/TLS加密：简介](#%E5%81%A5%E5%A3%AE%E7%9A%84ssltls%E5%8A%A0%E5%AF%86%EF%BC%9A%E7%AE%80%E4%BB%8B)
-  - [Cryptographic Techniques](#cryptographic-techniques)
-    - [Cryptographic Algorithms](#cryptographic-algorithms)
-    - [加密算法](#%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95)
-      - [Conventional cryptography](#conventional-cryptography)
-      - [传统加密](#%E4%BC%A0%E7%BB%9F%E5%8A%A0%E5%AF%86)
-      - [Public key cryptography](#public-key-cryptography)
-      - [公钥加密](#%E5%85%AC%E9%92%A5%E5%8A%A0%E5%AF%86)
-    - [Message Digests](#message-digests)
-    - [消息摘要](#%E6%B6%88%E6%81%AF%E6%91%98%E8%A6%81)
-    - [Digital Signatures](#digital-signatures)
-    - [数字签名](#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D)
-  - [Certificates](#certificates)
-  - [证书](#%E8%AF%81%E4%B9%A6)
-    - [Certificate Contents](#certificate-contents)
-    - [证书内容](#%E8%AF%81%E4%B9%A6%E5%86%85%E5%AE%B9)
-    - [Certificate Authorities](#certificate-authorities)
-    - [证书签发机构](#%E8%AF%81%E4%B9%A6%E7%AD%BE%E5%8F%91%E6%9C%BA%E6%9E%84)
-      - [Certificate Chains](#certificate-chains)
-      - [证书链](#%E8%AF%81%E4%B9%A6%E9%93%BE)
-      - [Creating a Root-Level CA](#creating-a-root-level-ca)
-      - [创建根级别证书](#%E5%88%9B%E5%BB%BA%E6%A0%B9%E7%BA%A7%E5%88%AB%E8%AF%81%E4%B9%A6)
-      - [Certificate Management](#certificate-management)
-      - [证书管理](#%E8%AF%81%E4%B9%A6%E7%AE%A1%E7%90%86)
-  - [Secure Sockets Layer (SSL)](#secure-sockets-layer-ssl)
-  - [安全套接字层（SSL）](#%E5%AE%89%E5%85%A8%E5%A5%97%E6%8E%A5%E5%AD%97%E5%B1%82%EF%BC%88ssl%EF%BC%89)
-    - [Establishing a Session](#establishing-a-session)
-    - [Key Exchange Method](#key-exchange-method)
-    - [Cipher for Data Transfer](#cipher-for-data-transfer)
-    - [Digest Function](#digest-function)
-    - [Handshake Sequence Protocol](#handshake-sequence-protocol)
-    - [Data Transfer](#data-transfer)
-    - [Securing HTTP Communication](#securing-http-communication)
-  - [References](#references)
-  - [参考文献](#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # SSL/TLS Strong Encryption: An Introduction
 # 健壮的SSL/TLS加密：简介
 
 As an introduction this chapter is aimed at readers who are familiar with the Web, HTTP, and Apache, but are not security experts. It is not intended to be a definitive guide to the SSL protocol, nor does it discuss specific techniques for managing certificates in an organization, or the important legal issues of patents and import and export restrictions. Rather, it is intended to provide a common background to mod_ssl users by pulling together various concepts, definitions, and examples as a starting point for further exploration.   
 作为一篇介绍性质的文章，本章节适用于熟悉Web、HTTP 和 Apache，但是对安全不甚精通的读者。本文并不打算写成SSL协议的权威指南，也不打算讨论组织内部证书管理的具体技术细节，更不会涉及关于专利和使用的法律问题。本文的目标是通过将各种概念、定义和示例进行整合，从而为使用`mod_ssl`的用户提供一个通用的背景知识，并以此为起点来从事进一步的探索。
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Cryptographic Techniques](#cryptographic-techniques)
+- [加密技术](#%E5%8A%A0%E5%AF%86%E6%8A%80%E6%9C%AF)
+  - [Cryptographic Algorithms](#cryptographic-algorithms)
+  - [加密算法](#%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95)
+    - [Conventional cryptography](#conventional-cryptography)
+    - [传统加密](#%E4%BC%A0%E7%BB%9F%E5%8A%A0%E5%AF%86)
+    - [Public key cryptography](#public-key-cryptography)
+    - [公钥加密](#%E5%85%AC%E9%92%A5%E5%8A%A0%E5%AF%86)
+  - [Message Digests](#message-digests)
+  - [消息摘要](#%E6%B6%88%E6%81%AF%E6%91%98%E8%A6%81)
+  - [Digital Signatures](#digital-signatures)
+  - [数字签名](#%E6%95%B0%E5%AD%97%E7%AD%BE%E5%90%8D)
+- [Certificates](#certificates)
+- [证书](#%E8%AF%81%E4%B9%A6)
+  - [Certificate Contents](#certificate-contents)
+  - [证书内容](#%E8%AF%81%E4%B9%A6%E5%86%85%E5%AE%B9)
+  - [Certificate Authorities](#certificate-authorities)
+  - [证书签发机构](#%E8%AF%81%E4%B9%A6%E7%AD%BE%E5%8F%91%E6%9C%BA%E6%9E%84)
+    - [Certificate Chains](#certificate-chains)
+    - [证书链](#%E8%AF%81%E4%B9%A6%E9%93%BE)
+    - [Creating a Root-Level CA](#creating-a-root-level-ca)
+    - [创建根级别证书](#%E5%88%9B%E5%BB%BA%E6%A0%B9%E7%BA%A7%E5%88%AB%E8%AF%81%E4%B9%A6)
+    - [Certificate Management](#certificate-management)
+    - [证书管理](#%E8%AF%81%E4%B9%A6%E7%AE%A1%E7%90%86)
+- [Secure Sockets Layer (SSL)](#secure-sockets-layer-ssl)
+- [安全套接字层（SSL）](#%E5%AE%89%E5%85%A8%E5%A5%97%E6%8E%A5%E5%AD%97%E5%B1%82%EF%BC%88ssl%EF%BC%89)
+  - [Establishing a Session](#establishing-a-session)
+  - [Key Exchange Method](#key-exchange-method)
+  - [Cipher for Data Transfer](#cipher-for-data-transfer)
+  - [Digest Function](#digest-function)
+  - [Handshake Sequence Protocol](#handshake-sequence-protocol)
+  - [Data Transfer](#data-transfer)
+  - [Securing HTTP Communication](#securing-http-communication)
+- [References](#references)
+- [参考文献](#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 ## Cryptographic Techniques
-##加密技术
+## 加密技术
 
 Understanding SSL requires an understanding of cryptographic algorithms, message digest functions (aka. one-way or hash functions), and digital signatures. These techniques are the subject of entire books (see for instance [AC96]) and provide the basis for privacy, integrity, and authentication.   
 只有理解了加密算法，消息摘要函数（又名单向或者哈希函数）和数字签名，才能对SSL有所了解。这些技术是整篇教材(see for instance [AC96]) 的主题，并且为大家提供了隐私保护、完整性检查和身份验证的基础知识。
@@ -143,7 +142,7 @@ A distinguished name is used to provide an identity in a specific context -- for
 **表２：专有名称信息**
 
 |专有名称字段（DN Field）|	缩写（Abbrev.）	|介绍（Description）| 示例（Example）|
-|--|--|--|--|
+|------|------|------|------|
 |公用名（Common Name）	|CN	|认证名称（Name being certified）|	CN=Joe Average|
 |组织或公司（Organization or Company） | O |	关联的组织名称（Name is associated with this organization）|	O=Snake Oil, Ltd.|
 |组织单位（Organizational Unit）|	OU|	关联的组织单位，如部门（Name is associated with this organization unit, such as a department）	|OU=Research Institute|
@@ -242,7 +241,7 @@ SSL协议设计之初就为加密、摘要、签名等特定算法提供了很�
 **表四: 安全套接字协议版本**
 
 |版本（Version）	|来源（Source）	|介绍（Description）|
-|--|--|--|
+|----|----|----|
 |SSL v2.0|	供应商标准 (来自于网景公司)|	实现的第一个SSL协议|
 |SSL v3.0|	过期的互联网草案 (来自于网景公司) [SSL3]	|修订以避免特定安全攻击, 添加非RSA密码，支持证书链|
 |TLS v1.0|	推荐的互联网标准 (来自 IETF) [TLS1]|	对SSL 3.0进行修订，更新MAC层使用HMAC算法, add block padding for block ciphers, 消息标准化以及更全面的警示信息|
