@@ -19,21 +19,13 @@
     - [创建根证书](#%E5%88%9B%E5%BB%BA%E6%A0%B9%E8%AF%81%E4%B9%A6)
     - [证书管理](#%E8%AF%81%E4%B9%A6%E7%AE%A1%E7%90%86)
 - [安全套接字层（SSL）](#%E5%AE%89%E5%85%A8%E5%A5%97%E6%8E%A5%E5%AD%97%E5%B1%82%EF%BC%88ssl%EF%BC%89)
-  - [Establishing a Session](#establishing-a-session)
   - [建立会话](#%E5%BB%BA%E7%AB%8B%E4%BC%9A%E8%AF%9D)
-  - [Key Exchange Method](#key-exchange-method)
   - [密钥交换方法](#%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%E6%96%B9%E6%B3%95)
-  - [Cipher for Data Transfer](#cipher-for-data-transfer)
   - [数据传输密码](#%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E5%AF%86%E7%A0%81)
-  - [Digest Function](#digest-function)
   - [摘要函数](#%E6%91%98%E8%A6%81%E5%87%BD%E6%95%B0)
-  - [Handshake Sequence Protocol](#handshake-sequence-protocol)
   - [握手过程协议](#%E6%8F%A1%E6%89%8B%E8%BF%87%E7%A8%8B%E5%8D%8F%E8%AE%AE)
-  - [Data Transfer](#data-transfer)
   - [数据传输](#%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93)
-  - [Securing HTTP Communication](#securing-http-communication)
   - [保护HTTP通信](#%E4%BF%9D%E6%8A%A4http%E9%80%9A%E4%BF%A1)
-- [References](#references)
 - [参考文献](#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -182,145 +174,94 @@ SSL协议设计之初就为加密、摘要、签名等特定算法提供了很�
 |TLS v1.1|  推荐的互联网标准 (来自 IETF) [TLS11]|   Update of TLS 1.0 to add protection against Cipher block chaining (CBC) attacks.|
 |TLS v1.2|  推荐的互联网标准 (来自 IETF) [TLS12]|   Update of TLS 1.2 deprecating MD5 as hash, and adding incompatibility to SSL so it will never negotiate the use of SSLv2.|
 
-There are a number of versions of the SSL protocol, as shown in Table 4. As noted there, one of the benefits in SSL 3.0 is that it adds support of certificate chain loading. This feature allows a server to pass a server certificate along with issuer certificates to the browser. Chain loading also permits the browser to validate the server certificate, even if Certificate Authority certificates are not installed for the intermediate issuers, since they are included in the certificate chain. SSL 3.0 is the basis for the Transport Layer Security [TLS] protocol standard, currently in development by the Internet Engineering Task Force (IETF).  
 如表4所示，SSL协议版本有很多个。正如上边所述，SSL3.0最大的进步是支持了证书链的加载。此特性允许服务器将服务器证书随颁发者证书一起传递到浏览器当中。链条加载同样允许浏览器验证服务器证书，甚至于中间签发机构的证书没有安装也不受影响，因为中间签发机构已经被包含在证书链当中了。SSL3.0是传输安全层 [TLS]协议的基础标准， 此协议由互联网工程任务组(IETF)开发。
 
-### Establishing a Session
 ### 建立会话
-The SSL session is established by following a handshake sequence between client and server, as shown in Figure 1. This sequence may vary, depending on whether the server is configured to provide a server certificate or request a client certificate. Although cases exist where additional handshake steps are required for management of cipher information, this article summarizes one common scenario. See the SSL specification for the full range of possibilities.  
+
 如图１所示，SSL会话是通过客户端和服务器的握手过程建立的。由于服务器可以配置是否提供服务器端证书或者是否请求客户端证书，因此该握手过程可能会有所不同。尽管出于密码信息管理的需要，有需要额外握手过程的情况存在，但本文只总结这一种常见场景。如果想要对此有更全面的了解，可以去阅读SSL规范。
 
-> Note
 > 注意：
 > 
-> Once an SSL session has been established, it may be reused. This
-> avoids the performance penalty of repeating the many steps needed to
-> start a session. To do this, the server assigns each SSL session a
-> unique session identifier which is cached in the server and which the
-> client can use in future connections to reduce the handshake time
-> (until the session identifier expires from the cache of the server).
 > SSL回话被建立之后，是可以被复用的。这就避免了为重建回话而重复这些复杂步骤所带来的性能问题。为了实现这个特性，服务器会给每个SSL会话分配一个会话识别码，并将其缓存于服务器中。如果稍后客户端想要重启回话就可以利用此特性减少握手所用时间（直到会话识别码过期）。
 
 ![此处输入图片的描述][1]   
 图１: 简化的SSL握手过程
 
-The elements of the handshake sequence, as used by the client and server, are listed below:  
 以下列出握手过程中客户端和服务器所用到的元素：
-
-1. Negotiate the Cipher Suite to be used during data transfer
-2. Establish and share a session key between client and server
-3. Optionally authenticate the server to the client
-4. Optionally authenticate the client to the server
 
 1. 协商传输过程中需要用到的密码套件
 2. 建立并共享用于在客户端和服务器端传送数据的会话密钥
 3. 可选的服务器端验证
 4. 可选的客户端验证
 
-The first step, Cipher Suite Negotiation, allows the client and server to choose a Cipher Suite supported by both of them. The SSL3.0 protocol specification defines 31 Cipher Suites. A Cipher Suite is defined by the following components:   
-第一步是协商密码套件，客户端和服务器端选出双方都支持的密码套件。SSL3.0协议规范定义了31中密码套件。密码套件的组成要素如下所示：
+第一步是协商密码套件，客户端和服务器端选出双方都支持的密码套件。SSL3.0协议规范定义了31种密码套件。密码套件的组成要素如下所示：
 
-- Key Exchange Method
 - 密钥交换方法
-- Cipher for Data Transfer
 - 数据传输密码
-- Message Digest for creating the Message Authentication Code (MAC)
 - 用于创建消息验证码（MAC）的消息摘要
 
-These three elements are described in the sections that follow.  
 这三种要素下边会为大家一一介绍。
 
-### Key Exchange Method
 ### 密钥交换方法
 
-The key exchange method defines how the shared secret symmetric cryptography key used for application data transfer will be agreed upon by client and server. SSL 2.0 uses RSA key exchange only, while SSL 3.0 supports a choice of key exchange algorithms including RSA key exchange (when certificates are used), and Diffie-Hellman key exchange (for exchanging keys without certificates, or without prior communication between client and server).  　
 密钥交换方法定义了应用数据传输所需的共享对称密钥是如何如何被客户端和服务器协商出来的。SSL2.0只支持RSA密钥交换，SSL 3.0支持了密钥交换算法的选择，这些选择包括RSA密钥交换（当使用证书时）和Diffie-Hellman密钥交换（无证书或客户端和服务器无预先沟通的情况）。
 
-One variable in the choice of key exchange methods is digital signatures -- whether or not to use them, and if so, what kind of signatures to use. Signing with a private key provides protection against a man-in-the-middle-attack during the information exchange used to generating the shared key [AC96, p516].  
 影响密钥交换方法选择的一个因素是是否使用数字签名和使用了何种数字签名。使用私钥进行签名可以保护用于生成共享密钥的信息交换不受中间人攻击的影响。
 
-### Cipher for Data Transfer
 ### 数据传输密码
-SSL uses conventional symmetric cryptography, as described earlier, for encrypting messages in a session. There are nine choices of how to encrypt, including the option not to encrypt:   
+
 如前所述，SSL使用传统的对称密码对会话时的消息进行加密。下面是九种加密算法（包括不进行加密在内）：
 
-- No encryption
-- 不进行加密
-- Stream Ciphers
+- 不加密
 - 流密码
- - RC4 with 40-bit keys
  - 40位密码的RC4
- - RC4 with 128-bit keys
  - 128位密码的RC4
-- CBC Block Ciphers
 - CBC分组密码
- - RC2 with 40 bit key
  - 40位密码的RC2
- - DES with 40 bit key
  - 40位密码的DES
- - DES with 56 bit key
  - 56位密码的DES
- - Triple-DES with 168 bit key
  - 168位密码的Triple-DES
- - Idea (128 bit key)
  - 128位密码的Idea
- - Fortezza (96 bit key)
  - 96位密码的Fortezza
 
-"CBC" refers to Cipher Block Chaining, which means that a portion of the previously encrypted cipher text is used in the encryption of the current block. "DES" refers to the Data Encryption Standard [AC96, ch12], which has a number of variants (including DES40 and 3DES_EDE). "Idea" is currently one of the best and cryptographically strongest algorithms available, and "RC2" is a proprietary algorithm from RSA DSI [AC96, ch13].  
 "CBC" 是密码分组链接的简称，意思是将以前加密密文的一部分用于当前块的加密。"DES"是数据教密标准的简称 [AC96, ch12]，它拥有许多变种(DES40 、 3DES_EDE等)。"Idea" 是现今可用的加密算法中最好、最强大的。"RC2"是RSA DSI的专有算法 [AC96, ch13]。
 
-### Digest Function
 ### 摘要函数
-The choice of digest function determines how a digest is created from a record unit. SSL supports the following:
+
 选择何种摘要函数决定了摘要如何生成，SSL支持如下摘要算法：
 
-- No digest (Null choice)
 - 不进行摘要计算（空选项）
-- MD5, a 128-bit hash
 - MD5，一种128位哈希值
 - 安全散列算法 (SHA-1),160位哈希值
 
-The message digest is used to create a Message Authentication Code (MAC) which is encrypted with the message to verify integrity and to protect against replay attacks.  
 消息摘要将消息进行加密来创建消息验证码，用于验证消息的完整性并防止重放攻击。
 
-### Handshake Sequence Protocol
 ### 握手过程协议
-The handshake sequence uses three protocols:  
+
 握手过程使用了三种协议：
 
-- The SSL Handshake Protocol for performing the client and server SSL session establishment.
-- 用于实现SSL会话创建的SSL握手协议。
-- The SSL Change Cipher Spec Protocol for actually establishing agreement on the Cipher Suite for the session.
-- 用于真正为会话建立密码套件协商的SSL变更密码规范协议。
-- The SSL Alert Protocol for conveying SSL error messages between client and server.
-- 用于标示客户端和服务器端SSL错误消息的SSL报警协议。
+- 用于创建SSL会话的SSL握手协议(SSL Handshake Protocol)。
+- 用于真正为会话建立密码套件协商的SSL变更密码通知协议(SSL Change Cipher Spec)。
+- 用于标示客户端和服务器端SSL错误消息的SSL报警协议(SSL Alert Protocol)。
 
-These protocols, as well as application protocol data, are encapsulated in the SSL Record Protocol, as shown in Figure 2. An encapsulated protocol is transferred as data by the lower layer protocol, which does not examine the data. The encapsulated protocol has no knowledge of the underlying protocol.  
-包括应用协议数据在内的这些所有协议都被封装在SSL记录协议中。如图２所示。封装好的协议直接被当做普通数据在底层协议中传输而不进行数据校检。封装后的协议对底层协议一无所知。
+包括应用协议数据在内的这些所有协议都被封装在SSL记录协议（SSL Record Protocol）中。如图２所示。封装好的协议直接被当做普通数据在底层协议中传输而不进行数据校检。封装后的协议对底层协议一无所知。
 
 ![此处输入图片的描述][2]  
 图 2: SSL 协议栈
 
-The encapsulation of SSL control protocols by the record protocol means that if an active session is renegotiated the control protocols will be transmitted securely. If there was no previous session, the Null cipher suite is used, which means there will be no encryption and messages will have no integrity digests, until the session has been established.  
-SSL记录协议对SSL控制协议的封装可以是的SSL控制协议在活动会话重新谈判的情形下安全的传输。如果之前没有会话存在，就会使用空的密码套件，也就是说不存在封装、消息、完整的摘要，直到建立会话。
+SSL记录协议对SSL控制协议（SSL Control Protocol）的封装可以使的SSL控制协议在活动会话重新谈判的情形下进行安全传输。如果之前没有会话存在，就会使用空的密码套件，也就是说不存在封装、消息、完整的摘要，直到建立会话。
 
-### Data Transfer
 ### 数据传输
 
-The SSL Record Protocol, shown in Figure 3, is used to transfer application and SSL Control data between the client and server, where necessary fragmenting this data into smaller units, or combining multiple higher level protocol data messages into single units. It may compress, attach digest signatures, and encrypt these units before transmitting them using the underlying reliable transport protocol (Note: currently, no major SSL implementations include support for compression).  
-如图3所示，SSL记录协议用于在客户端和服务器之间传输应用程序和SSL控制数据，必要时将这些数据分段为较小单元，或将多个较高级协议数据消息组合成单个单元。还可能涉及到压缩，摘要签名附件并且在使用底层传输层传递数据前进行加密。（注意：当今主流SSL实现并不支持压缩功能）
+如图3所示，SSL记录协议用于在客户端和服务器之间传输应用程序和SSL控制数据，必要时将这些数据分段为较小单元，或将多个较高级协议数据消息组合成单个单元。还可能涉及到压缩、摘要签名附件并且在使用底层传输层传递数据前进行加密。（注意：当今主流SSL实现并不支持压缩功能）
 
-![此处输入图片的描述][3]
+![此处输入图片的描述][3]  
 图 3: SSL记录协议
 
-### Securing HTTP Communication
 ### 保护HTTP通信
 
-One common use of SSL is to secure Web HTTP communication between a browser and a webserver. This does not preclude the use of non-secured HTTP - the secure version (called HTTPS) is the same as plain HTTP over SSL, but uses the URL scheme https rather than http, and a different server port (by default, port 443). This functionality is a large part of what mod_ssl provides for the Apache webserver.  
 SSL的一个常见应用场景是保护浏览器和WEB服务器间的HTTP通讯。这并不排除使用未受保护的HTTP，安全版的HTTPS实际上就是基于SSL的普通HTTP，只不过用的方案名是https而不是http而已，当然服务器端口也成了默认的443。这是阿帕奇Web服务器mod_ssl所提供的重要功能。
 
-## References
 ## 参考文献
 [AC96]    
 Bruce Schneier, Applied Cryptography, 2nd Edition, Wiley, 1996. See http://www.counterpane.com/ for various other materials by Bruce Schneier.
