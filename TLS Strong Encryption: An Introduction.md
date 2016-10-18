@@ -103,7 +103,7 @@
 
 > Example of a PEM-encoded certificate (snakeoil.crt)
 > 
-> -----BEGIN CERTIFICATE----- 
+> -----BEGIN CERTIFICATE-----   
 > MIIC7jCCAlegAwIBAgIBATANBgkqhkiG9w0BAQQFADCBqTELMAkGA1UEBhMCWFkx
 > FTATBgNVBAgTDFNuYWtlIERlc2VydDETMBEGA1UEBxMKU25ha2UgVG93bjEXMBUG
 > A1UEChMOU25ha2UgT2lsLCBMdGQxHjAcBgNVBAsTFUNlcnRpZmljYXRlIEF1dGhv
@@ -119,7 +119,7 @@
 > HRMECDAGAQH/AgEAMBEGCWCGSAGG+EIBAQQEAwIAQDANBgkqhkiG9w0BAQQFAAOB
 > gQAZUIHAL4D09oE6Lv2k56Gp38OBDuILvwLg1v1KL8mQR+KFjghCrtpqaztZqcDt
 > 2q2QoyulCgSzHbEGmi0EsdkPfg6mp0penssIFePYNI+/8u9HT4LuKMJX15hxBam7
-> dUHzICxBVC1lnHyYGjDuAMhe396lYAn8bCld1/L4NMGBCQ==
+> dUHzICxBVC1lnHyYGjDuAMhe396lYAn8bCld1/L4NMGBCQ==  
 > -----END CERTIFICATE-----
 
 ### 证书签发机构
@@ -148,14 +148,9 @@
 
 举例来说，如果爱丽丝以公司雇员的身份拥有一份证书，那当她离职后，她所持有的证书需要被吊销掉。由于证书是在进行主体身份查验后颁发的，然后被分发给主体进行通讯，所以不可能去通知证书本身它已经被吊销。因此当检验证书的合法性的时候，联系证书签发机构去检查吊销证书列表就显得尤为重要了，而且这个过程常常需要人工操作。
 
-> Note
-> 
-> If you use a Certificate Authority that browsers are not configured to
-> trust by default, it is necessary to load the Certificate Authority
-> certificate into the browser, enabling the browser to validate server
-> certificates signed by that Certificate Authority. Doing so may be
-> dangerous, since once loaded, the browser will accept all certificates
-> signed by that Certificate Authority.
+> 注意：
+
+> 如果你面对的证书签发机构没有被浏览器预置为可信的，那就需要将此证书签发机构的证书导入到浏览器中，以便允许验证来自于此机构签发的服务器证书。然而这样做是有一定危险性的，一旦将此签发机构的证书导入，就意味着信任所有由它所签发的证书。
 
 
 ## 安全套接字层（SSL）
